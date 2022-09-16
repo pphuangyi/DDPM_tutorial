@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-class ToyzeroAligned(Dataset):
+class Toyzero(Dataset):
     """
     Load toyzero paired data
     """
@@ -16,7 +16,8 @@ class ToyzeroAligned(Dataset):
                  dataroot,
                  partition='train',
                  domain=None,
-                 max_dataset_size=float('inf'),):
+                 max_dataset_size=float('inf'),
+                 clamp=100):
         super().__init__()
 
         assert partition in ['train', 'test']
@@ -36,7 +37,7 @@ class ToyzeroAligned(Dataset):
         length = len(fnames)
         assert length > 0
 
-        indices = list(length)
+        indices = list(range(length))
         random.shuffle(indices)
         if max_dataset_size < length:
             indices = indices[:max_dataset_size]
@@ -44,16 +45,21 @@ class ToyzeroAligned(Dataset):
         self.fnames = [fnames[i] for i in indices]
         self.length = len(self.fnames)
 
+        self.clamp = clamp
+
     def __len__(self,):
         return self.length
 
-    @staticmethod
-    def _load(fname):
+    def _load(self, fname):
         with np.load(fname) as file_handle:
             image = file_handle[file_handle.files[0]]
         # The image is short type
         image = torch.tensor(image, dtype=torch.float)
+        image = torch.clamp(image, min=-self.clamp, max=-self.clamp)
+        image /= self.clamp
+        image = image.unsqueeze(0)
         return image
 
     def __getitem__(self, index):
-        return self._load(self.fnames[index % self.length])
+        fname = self.fnames[index % self.length]
+        return self._load(fname), str(fname)
