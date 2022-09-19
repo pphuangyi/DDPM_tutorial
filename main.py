@@ -15,13 +15,16 @@ CKPT_DIR = Path("./checkpoints/")
 IMG_DIR = Path("./images/")
 TOYZERO_DIR = Path('/data/datasets/LS4GAN/toy-adc_256x256_precropped')
 
-def get_config(dataset):
+def get_config(dataset, partition='train', domain='real', max_dataset_size=2000):
     """
     Get dataset config
     """
 
     if dataset == "toyzero":
-        data = Toyzero(TOYZERO_DIR, partition='train', domain='real', max_dataset_size=2000)
+        data = Toyzero(TOYZERO_DIR,
+                       partition=partition,
+                       domain=domain,
+                       max_dataset_size=max_dataset_size)
         return {'data':data, 'channels': 1, 'img_sz': (1, 256, 256)}
 
     if dataset == "fashion":
@@ -51,7 +54,7 @@ class DDPMRun():
             self.ckpt_dir = CKPT_DIR
         if not self.ckpt_dir.exists():
             self.ckpt_dir.mkdir(exist_ok=True, parents=True)
-        print(f'Checkpoints will be save to {self.ckpt_dir}')
+        print(f'Checkpoints will be saved to or loaded from{self.ckpt_dir}')
 
 
     def train(self, batch_size=256, epochs=1000, ckpt_interval=10):
@@ -104,8 +107,11 @@ class DDPMRun():
 
         if not img_dir:
             img_dir = IMG_DIR
+        else:
+            img_dir = Path(img_dir)
         if not img_dir.exists():
             img_dir.mkdir(parents=True)
+        print(f'Images will be saved to {img_dir}')
 
         sample_idx_offset = 0
         t_pad = len(str(self.timesteps))
@@ -115,6 +121,7 @@ class DDPMRun():
             bsz = min(sample_n, batch_size)
             sample_n -= bsz
 
+            print(f'Generating samples {sample_idx_offset} to {sample_idx_offset + bsz - 1}')
             imgs = ddpm.denoise_loop(batch_size=bsz, record_step=record_step)
 
             for time_idx, img_time in enumerate(imgs):

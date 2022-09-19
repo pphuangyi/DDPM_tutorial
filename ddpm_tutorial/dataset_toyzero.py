@@ -55,7 +55,7 @@ class Toyzero(Dataset):
             image = file_handle[file_handle.files[0]]
         # The image is short type
         image = torch.tensor(image, dtype=torch.float)
-        image = torch.clamp(image, min=-self.clamp, max=-self.clamp)
+        image = torch.clamp(image, min=-self.clamp, max=self.clamp)
         image /= self.clamp
         image = image.unsqueeze(0)
         return image
