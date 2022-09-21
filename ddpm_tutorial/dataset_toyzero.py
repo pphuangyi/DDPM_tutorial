@@ -17,6 +17,7 @@ class Toyzero(Dataset):
                  partition='train',
                  domain=None,
                  max_dataset_size=float('inf'),
+                 shuffle=False,
                  clamp=100):
         super().__init__()
 
@@ -38,7 +39,9 @@ class Toyzero(Dataset):
         assert length > 0
 
         indices = list(range(length))
-        random.shuffle(indices)
+        if shuffle:
+            random.shuffle(indices)
+
         if max_dataset_size < length:
             indices = indices[:max_dataset_size]
 
