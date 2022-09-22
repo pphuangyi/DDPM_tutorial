@@ -97,7 +97,8 @@ class DDPMRun():
         """
 
         states = torch.load(self.ckpt_dir/f"epc_{epoch}.pt")
-        self.ddpm.load_state_dict(states).cuda()
+        self.ddpm.load_state_dict(states)
+        self.ddpm.cuda()
 
         if self.run_name:
             img_dir = IMG_DIR/self.run_name

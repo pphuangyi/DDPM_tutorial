@@ -29,7 +29,7 @@ class DDPMTranslate():
         )
         self.encoder.load_state_dict(torch.load(encoder_ckpt))
         self.encoder.cuda()
-        
+
         self.decoder = DDPM(
             Unet(dim=32, dim_mults=(1, 2, 4,), channels=1),
             timesteps=timesteps,
@@ -45,10 +45,10 @@ class DDPMTranslate():
         """
         Use saved model at epoch
         """
-        code = self.encoder.encode(tensor, self.encode_step)
+        # code = self.encoder.encode(tensor, self.encode_step)
         if record_freq is None:
             record_freq = self.decode_step
-        return self.decoder.decode(code, self.decode_step, record_freq)
+        return self.decoder.decode(tensor, self.decode_step, record_freq)
 
 
 

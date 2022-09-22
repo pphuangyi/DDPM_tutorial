@@ -93,6 +93,37 @@ class DDPM(torch.nn.Module):
 
     @torch.no_grad()
     def decode(self, code, decode_step, record_freq):
+
+        batch_size = code.shape[0]
+        device = code.device
+
+        img = code
+        imgs = {'input': img}
+
+        for time_step in tqdm(range(decode_step - 1, -1, -1)):
+            batch_t = torch.full((batch_size,), time_step, device=device)
+            beta_t = torch.gather(self.beta, dim=0, index=batch_t).view(-1, *[1]*3)
+            alpha_bar_t = torch.gather(self.alpha_bar, dim=0, index=batch_t).view(-1, *[1]*3)
+
+            noise = torch.randn_like(img, device=device)
+            img_noise = img * torch.sqrt(1 - beta_t) + noise * torch.sqrt(beta_t)
+
+            pred = self.model(img_noise, batch_t) * (beta_t / torch.sqrt(1 - alpha_bar_t))
+            img = (img - pred) / torch.sqrt(1 - beta_t)
+
+            if time_step % record_freq == 0:
+                imgs[time_step] = img
+
+        results = []
+        for idx in range(batch_size):
+            seq = {key: self._to_numpy(val[idx])
+                   for key, val in imgs.items()}
+            results.append(seq)
+
+        return results
+
+    @torch.no_grad()
+    def decode(self, code, decode_step, record_freq):
         batch_size = code.shape[0]
         device = code.device
 
